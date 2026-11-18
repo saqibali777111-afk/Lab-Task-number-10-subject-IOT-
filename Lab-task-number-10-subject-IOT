@@ -1,0 +1,217 @@
+Name Saqib ali
+Roll number 86
+
+
+
+# Library Management System
+# A menu based program to manage books and keep track of issued / returned books.
+
+
+def get_quantity():
+    # keep asking until the user enters a positive whole number
+    while True:
+        text = input("Enter Quantity: ").strip()
+        try:
+            qty = int(text)
+        except ValueError:
+            print("Quantity must be a whole number. Try again.")
+            continue
+
+        if qty > 0:
+            return qty
+        print("Quantity must be greater than 0. Try again.")
+
+
+class Book:
+    def __init__(self, book_id, title, author, quantity):
+        self.book_id = book_id
+        self.title = title
+        self.author = author
+        self.quantity = quantity    # total copies
+        self.available = quantity   # copies that are not issued
+
+    def show(self):
+        print("ID:", self.book_id, "| Title:", self.title, "| Author:", self.author,
+              "| Available:", self.available, "out of", self.quantity)
+
+
+class Library:
+    def __init__(self):
+        self.books = []    # list of Book objects
+        self.issued = []   # list of dictionaries, one for each issued copy
+
+    def find_book(self, book_id):
+        # returns the Book object, or None if there is no book with this id
+        for book in self.books:
+            if book.book_id.lower() == book_id.lower():
+                return book
+        return None
+
+    def add_book(self):
+        print("\nADD NEW BOOK")
+        book_id = input("Enter Book ID: ").strip()
+
+        if book_id == "":
+            print("Book ID cannot be empty!")
+            return
+
+        if self.find_book(book_id) is not None:
+            print("A book with this ID already exists!")
+            return
+
+        title = input("Enter Book Title: ").strip()
+        author = input("Enter Author Name: ").strip()
+        if title == "" or author == "":
+            print("Title and author cannot be empty!")
+            return
+
+        quantity = get_quantity()
+
+        new_book = Book(book_id, title, author, quantity)
+        self.books.append(new_book)
+        print("Book added successfully!")
+
+    def view_books(self):
+        print("\nALL BOOKS")
+        if len(self.books) == 0:
+            print("No books in the library yet.")
+            return
+
+        for book in self.books:
+            book.show()
+
+    def search_book(self):
+        print("\nSEARCH BOOK")
+        keyword = input("Enter Book ID or Title: ").strip().lower()
+
+        if keyword == "":
+            print("Please type an ID or a title to search.")
+            return
+
+        found = False
+        for book in self.books:
+            # the id has to match fully but the title can match partly
+            if keyword == book.book_id.lower() or keyword in book.title.lower():
+                book.show()
+                found = True
+
+        if not found:
+            print("No book found with that ID or title.")
+
+    def issue_book(self):
+        print("\nISSUE BOOK")
+        book_id = input("Enter Book ID: ").strip()
+        book = self.find_book(book_id)
+
+        if book is None:
+            print("Book not found!")
+            return
+
+        if book.available == 0:
+            print("Sorry, all copies of this book are already issued.")
+            return
+
+        student = input("Enter Student Name: ").strip()
+        if student == "":
+            print("Student name cannot be empty!")
+            return
+
+        book.available = book.available - 1
+        record = {"book_id": book.book_id, "student": student}
+        self.issued.append(record)
+
+        print("Book issued successfully!")
+        print("Available Quantity:", book.available)
+
+    def return_book(self):
+        print("\nRETURN BOOK")
+        book_id = input("Enter Book ID: ").strip()
+        book = self.find_book(book_id)
+
+        if book is None:
+            print("Book not found!")
+            return
+
+        student = input("Enter Student Name: ").strip()
+
+        for record in self.issued:
+            if record["book_id"] == book.book_id and record["student"].lower() == student.lower():
+                self.issued.remove(record)
+                book.available = book.available + 1
+                print("Book returned successfully!")
+                print("Available Quantity:", book.available)
+                return
+
+        print("No issue record found for this book and student.")
+
+    def delete_book(self):
+        print("\nDELETE BOOK")
+        book_id = input("Enter Book ID: ").strip()
+        book = self.find_book(book_id)
+
+        if book is None:
+            print("Book not found!")
+            return
+
+        # a book cannot be deleted while any copy is issued
+        for record in self.issued:
+            if record["book_id"] == book.book_id:
+                print("Cannot delete this book because some copies are still issued.")
+                return
+
+        self.books.remove(book)
+        print("Book deleted successfully!")
+
+    def view_issued(self):
+        print("\nISSUED BOOKS")
+        if len(self.issued) == 0:
+            print("No books are issued right now.")
+            return
+
+        for record in self.issued:
+            book = self.find_book(record["book_id"])
+            print("Book ID:", record["book_id"], "| Title:", book.title,
+                  "| Issued to:", record["student"])
+
+
+def show_menu():
+    print("\n===== LIBRARY MANAGEMENT SYSTEM =====")
+    print("1. Add Book")
+    print("2. View All Books")
+    print("3. Search Book")
+    print("4. Issue Book")
+    print("5. Return Book")
+    print("6. Delete Book")
+    print("7. View Issued Books")
+    print("8. Exit")
+
+
+def main():
+    library = Library()
+
+    while True:
+        show_menu()
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            library.add_book()
+        elif choice == "2":
+            library.view_books()
+        elif choice == "3":
+            library.search_book()
+        elif choice == "4":
+            library.issue_book()
+        elif choice == "5":
+            library.return_book()
+        elif choice == "6":
+            library.delete_book()
+        elif choice == "7":
+            library.view_issued()
+        elif choice == "8":
+            print("Thank you for using the Library Management System. Goodbye!")
+            break
+        else:
+            print("Invalid choice, please enter a number from 1 to 8.")
+
+
+main()
